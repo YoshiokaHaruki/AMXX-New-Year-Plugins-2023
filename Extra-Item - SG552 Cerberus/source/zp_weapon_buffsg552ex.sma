@@ -29,6 +29,14 @@
 #endif
 
 /**
+ * Automatically precache sounds from the model
+ * 
+ * If you have ReHLDS installed, you do not need this setting with a server cvar
+ * `sv_auto_precache_sounds_in_models 1`
+ */
+#define PrecacheSoundsFromModel
+
+/**
  * Use optimized sprites.
  * Implies to use sprites that are smaller, fewer extra/repeated frames.
  * Also, with these sprites, you are less likely to catch
@@ -39,6 +47,7 @@
 
 #if defined _zombieplague_included
 	/* ~ [ Extra Item ] ~ */
+	// If you need to remove weapon from Extra-Items, comment out this line
 	new const ExtraItem_Name[ ] =			"SG552 Cerberus";
 	const ExtraItem_Cost =					0;
 #endif
@@ -64,11 +73,11 @@ new const WeaponSounds[ ][ ] = {
 	"weapons/buffsg552ex_claw_4.wav"
 };
 
-const ModelWorldBody =						0;
+const ModelWorldBody =						0; // Submodel of w_ model
 
-const WeaponMaxClip =						50;
-const WeaponDefaultAmmo =					150;
-const WeaponMaxAmmo =						250;
+const WeaponMaxClip =						50; // Max Clip
+const WeaponDefaultAmmo =					150; // Give Ammo
+const WeaponMaxAmmo =						250; // Max Ammo
 
 #if defined _reapi_included
 	new const WeaponDamage[ ] = {
@@ -82,11 +91,13 @@ const WeaponMaxAmmo =						250;
 #else
 	new const Float: WeaponDamageMultiplier[ ] = {
 		// Default, In ZOOM
-		1.13, 0.99
+		1.303, 1.182
 	};
 #endif
 
-const Float: WeaponAccuracy =				0.2;
+const Float: WeaponAccuracy =				0.2; // Accuracy weapon (Now is original SG552 value)
+
+// Shooting speed
 new const Float: WeaponRate[ ] = {
 	// Default, In ZOOM
 	0.1, 0.3
@@ -97,7 +108,7 @@ new const Float: WeaponRate[ ] = {
  * In the original, if you didn't even shoot and
  * pressed the mode button again (Right Mouse Button), the mode was canceled
  */
-#define DontWasteModeIfDontShoots
+// #define DontWasteModeIfDontShoots
 
 const ChargedWeaponFOV =					75; // FOV in charged mode
 const ChargedWeaponShoots =					40; // Count of shoots for ready mode
@@ -105,7 +116,7 @@ const ChargedWeaponBody =					2; // v_ model body if mode is ready
 const Float: ChargedWeaponClawsRadius =		60.0; // Radius in mode (claws)
 const Float: ChargedWeaponClawsDamage =		250.0; // Damage in mode (claws)
 const Float: ChargedWeaponClawsPainShock =	1.0; // PainShock (1.0 - Enable / 0.0 - Disable)
-const ChargedWeaponClawsDamageType =		DMG_BULLET|DMG_NEVERGIB;
+const ChargedWeaponClawsDamageType =		DMG_BULLET|DMG_NEVERGIB; // Charged mode damage type
 
 new const ChargedClawsSprites[ ][ ] = {
 #if defined UseOptimizedSprites
@@ -335,10 +346,9 @@ public bool: native_give_user_weapon( )
 	enum { arg_player = 1 };
 
 	new pPlayer = get_param( arg_player );
-
 	if ( !CBasePlayer__GiveWeapon( pPlayer ) )
 	{
-		log_error( AMX_ERR_NATIVE, "Failed to issue a weapon to the player %i", pPlayer );
+		log_error( AMX_ERR_NATIVE, "Failed to issue a weapon to the player. (Id: %i)", pPlayer );
 		return false;
 	}
 
