@@ -14,7 +14,18 @@ new const PluginAuthor[ ] =				"Yoshioka Haruki";
 
 /* ~ [ Plugin Settings ] ~ */
 /**
- * Hide the Weapon Player Model if the player is dead
+ * Hide th Wepaon Player Model each Deploy.
+ * 
+ * You will not have such that for some reason there is a model that you no longer have,
+ * However, the call to the "CBasePlayer__WeaponPlayerModel" function will be called 1 time more.
+ * 
+ * When using this parameter, you will have to use the
+ * native "api_wpn_player_model_hide" when removing the weapon you need.
+ */
+#define HidePlayerModelEachDeploy
+
+/**
+ * Hide the Weapon Player Model if the player is dead.
  */
 #define HidePlayerModelWhenDie
 
@@ -47,24 +58,28 @@ public plugin_init( )
 
 #if defined _reapi_included
 	/* -> ReGameDLL <- */
-	RegisterHookChain( RG_CBasePlayerWeapon_DefaultDeploy, "CWeapon__Deploy_Pre", false );
+	#if defined HidePlayerModelEachDeploy
+		RegisterHookChain( RG_CBasePlayerWeapon_DefaultDeploy, "CWeapon__Deploy_Pre", false );
+	#endif
 
 	#if defined HidePlayerModelWhenDie
 		RegisterHookChain( RG_CBasePlayer_Killed, "CPlayer__Killed_Post", true );
 	#endif
 #else
 	/* -> HamSandwich <- */
-	new WeaponReferences[ ][ ] = {
-		"weapon_p228", "weapon_scout", "weapon_hegrenade", "weapon_xm1014", "weapon_c4",
-		"weapon_mac10", "weapon_aug", "weapon_smokegrenade", "weapon_elite", "weapon_fiveseven", 
-		"weapon_ump45", "weapon_sg550", "weapon_galil", "weapon_famas", "weapon_usp", "weapon_glock18", 
-		"weapon_awp", "weapon_mp5navy", "weapon_m249", "weapon_m3", "weapon_m4a1", "weapon_tmp", 
-		"weapon_g3sg1", "weapon_flashbang", "weapon_deagle", "weapon_sg552", "weapon_ak47", 
-		"weapon_knife", "weapon_p90"
-	};
+	#if defined HidePlayerModelEachDeploy
+		new WeaponReferences[ ][ ] = {
+			"weapon_p228", "weapon_scout", "weapon_hegrenade", "weapon_xm1014", "weapon_c4",
+			"weapon_mac10", "weapon_aug", "weapon_smokegrenade", "weapon_elite", "weapon_fiveseven", 
+			"weapon_ump45", "weapon_sg550", "weapon_galil", "weapon_famas", "weapon_usp", "weapon_glock18", 
+			"weapon_awp", "weapon_mp5navy", "weapon_m249", "weapon_m3", "weapon_m4a1", "weapon_tmp", 
+			"weapon_g3sg1", "weapon_flashbang", "weapon_deagle", "weapon_sg552", "weapon_ak47", 
+			"weapon_knife", "weapon_p90"
+		};
 
-	for ( new i = 0, iIterations = sizeof WeaponReferences; i < iIterations; i++ )
-		RegisterHam( Ham_Item_Deploy, WeaponReferences[ i ], "CWeapon__Deploy_Pre", false );
+		for ( new i = 0, iIterations = sizeof WeaponReferences; i < iIterations; i++ )
+			RegisterHam( Ham_Item_Deploy, WeaponReferences[ i ], "CWeapon__Deploy_Pre", false );
+	#endif
 
 	#if defined HidePlayerModelWhenDie
 		RegisterHam( Ham_Killed, "player", "CPlayer__Killed_Post", true );
@@ -76,14 +91,16 @@ public client_putinserver( pPlayer ) CBasePlayer__InitPlayerModel( pPlayer );
 public client_disconnected( pPlayer ) CBasePlayer__RemovePlayerModel( pPlayer );
 
 /* ~ [ ReGameDLL / HamSandwich ] ~ */
-public CWeapon__Deploy_Pre( const pItem )
-{
-	new pPlayer = get_member( pItem, m_pPlayer );
-	if ( !is_user_alive( pPlayer ) )
-		return;
+#if defined HidePlayerModelEachDeploy
+	public CWeapon__Deploy_Pre( const pItem )
+	{
+		new pPlayer = get_member( pItem, m_pPlayer );
+		if ( !is_user_alive( pPlayer ) )
+			return;
 
-	CBasePlayer__WeaponPlayerModel( pPlayer );
-}
+		CBasePlayer__WeaponPlayerModel( pPlayer );
+	}
+#endif
 
 #if defined HidePlayerModelWhenDie
 	public CPlayer__Killed_Post( const pVictim ) CBasePlayer__WeaponPlayerModel( pVictim );
