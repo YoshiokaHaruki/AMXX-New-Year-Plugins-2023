@@ -146,8 +146,6 @@ bool: CBasePlayer__WeaponPlayerModel( const pPlayer, const szModel[ ] = "", cons
 	return true;
 }
 
-public CBasePlayer__GetPlayerModel( const pPlayer ) return gl_pWeaponPlayerModel[ pPlayer ];
-
 public bool: CBasePlayer__RemovePlayerModel( const pPlayer )
 {
 	new bool: bResult = false;
