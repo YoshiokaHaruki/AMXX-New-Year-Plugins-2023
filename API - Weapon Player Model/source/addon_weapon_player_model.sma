@@ -150,14 +150,16 @@ public CBasePlayer__GetPlayerModel( const pPlayer ) return gl_pWeaponPlayerModel
 
 public bool: CBasePlayer__RemovePlayerModel( const pPlayer )
 {
+	new bool: bResult = false;
+
 	if ( !is_nullent( gl_pWeaponPlayerModel[ pPlayer ] ) )
 	{
 		UTIL_KillEntity( gl_pWeaponPlayerModel[ pPlayer ] );
-		return true;
+		bResult = true;
 	}
 
 	gl_pWeaponPlayerModel[ pPlayer ] = NULLENT;
-	return false;
+	return bResult;
 }
 
 /* ~ [ Stocks ] ~ */
