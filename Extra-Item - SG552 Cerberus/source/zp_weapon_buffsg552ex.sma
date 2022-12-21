@@ -18,9 +18,9 @@
 #include <fakemeta>
 #include <hamsandwich>
 #include <xs>
+// #include <reapi>
 #include <zombieplague>
 
-#include <reapi>
 #tryinclude <api_muzzleflash>
 #tryinclude <api_smokewallpuff>
 
@@ -207,7 +207,18 @@ enum ( <<= 1 ) {
 #endif
 };
 
-/* ~ [ Macrosese ] ~ */
+/* ~ [ Macroses ] ~ */
+// idk how to use AMXX version 1.8.2 and below, this is an outdated bullshit
+#if AMXX_VERSION_NUM <= 183
+	#define OBS_IN_EYE							4
+#endif
+
+#if AMXX_VERSION_NUM <= 182
+	#define write_coord_f(%0)					engfunc( EngFunc_WriteCoord, %0 )
+	stock message_begin_f( const iDest, const iMsgType, const Float: vecOrigin[ 3 ] = { 0.0, 0.0, 0.0 }, const pReceiver = 0 )
+		engfunc( EngFunc_MessageBegin, iDest, iMsgType, vecOrigin, pReceiver );
+#endif
+
 #if !defined Vector3
 	#define Vector3(%0)					Float: %0[ 3 ]
 #endif
@@ -317,9 +328,9 @@ public plugin_init( )
 	RegisterHam( Ham_Weapon_SecondaryAttack, WeaponReference, "Ham_CWeapon_SecondaryAttack_Pre", false );
 
 #if !defined _reapi_included
+	/* -> Ham: Trace Attack -> */
 	new const TraceAttack_CallBack[ ] = "Ham_CEntity_TraceAttack_Pre";
 
-	/* -> Ham: Trace Attack -> */
 	gl_HamHook_TraceAttack[ 0 ] = RegisterHam( Ham_TraceAttack,	"func_breakable", TraceAttack_CallBack, false );
 	gl_HamHook_TraceAttack[ 1 ] = RegisterHam( Ham_TraceAttack,	"info_target", TraceAttack_CallBack, false );
 	gl_HamHook_TraceAttack[ 2 ] = RegisterHam( Ham_TraceAttack,	"player", TraceAttack_CallBack, false );
@@ -635,18 +646,17 @@ public Ham_CWeapon_PostFrame_Pre( const pItem )
 			return HAM_SUPERCEDE;
 
 		new iClip = GetWeaponClip( pItem );
-		if ( GetWeaponClip( pItem ) >= WeaponMaxClip )
+		if ( iClip >= WeaponMaxClip )
 			return HAM_SUPERCEDE;
 
 		SetWeaponClip( pItem, 0 );
 		ExecuteHam( Ham_Weapon_Reload, pItem );
 		SetWeaponClip( pItem, iClip );
-		set_member( pItem, m_Weapon_fInReload, true );
 
 		CBasePlayerWeapon__ResetChargeMode( pItem, pPlayer );
-
 		UTIL_SendWeaponAnim( MSG_ONE, pPlayer, pItem, WeaponAnim_Reload );
 
+		set_member( pItem, m_Weapon_fInReload, true );
 		set_member( pPlayer, m_flNextAttack, WeaponAnim_Reload_Time );
 		set_member( pItem, m_Weapon_flTimeWeaponIdle, WeaponAnim_Reload_Time );
 
@@ -667,7 +677,6 @@ public Ham_CWeapon_PostFrame_Pre( const pItem )
 			return;
 
 		CBasePlayerWeapon__ResetChargeMode( pItem, pPlayer );
-
 		UTIL_SendWeaponAnim( MSG_ONE, pPlayer, pItem, WeaponAnim_Reload );
 
 		set_member( pPlayer, m_flNextAttack, WeaponAnim_Reload_Time );
@@ -696,16 +705,11 @@ public Ham_CWeapon_PrimaryAttack_Pre( const pItem )
 	if ( !IsCustomWeapon( pItem, WeaponUnicalIndex ) )
 		return HAM_IGNORED;
 
-	new iClip = GetWeaponClip( pItem );
-	if ( !iClip ) 
+	if ( !CBasePlayerWeapon__Fire( pItem ) )
 	{
 		ExecuteHam( Ham_Weapon_PlayEmptySound, pItem );
 		set_member( pItem, m_Weapon_flNextPrimaryAttack, 0.2 );
-
-		return HAM_SUPERCEDE;
 	}
-
-	CBasePlayerWeapon__Fire( pItem, iClip );
 
 	return HAM_SUPERCEDE;
 }
@@ -791,8 +795,12 @@ public bool: CBasePlayer__GiveWeapon( const pPlayer )
 	return true;
 }
 
-public CBasePlayerWeapon__Fire( const pItem, iClip )
+public bool: CBasePlayerWeapon__Fire( const pItem )
 {
+	new iClip = GetWeaponClip( pItem );
+	if ( !iClip )
+		return false;
+
 	new pPlayer = get_member( pItem, m_pPlayer );
 	new bitsFlags = get_entvar( pPlayer, var_flags );
 	new Vector3( vecVelocity ); get_entvar( pPlayer, var_velocity, vecVelocity );
@@ -832,8 +840,6 @@ public CBasePlayerWeapon__Fire( const pItem, iClip )
 	set_member( pItem, m_Weapon_flAccuracy, flAccuracy );
 	set_member( pItem, m_Weapon_iShotsFired, iShotsFired );
 #else
-	#pragma unused iClip
-
 	static _FM_Hook_PlayBackEvent_Pre; _FM_Hook_PlayBackEvent_Pre = register_forward( FM_PlaybackEvent, "FM_Hook_PlaybackEvent_Pre", false );
 	static _FM_Hook_TraceLine_Post; _FM_Hook_TraceLine_Post = register_forward( FM_TraceLine, "FM_Hook_TraceLine_Post", true );
 	ToggleTraceAttack( true );
@@ -869,6 +875,8 @@ public CBasePlayerWeapon__Fire( const pItem, iClip )
 	set_member( pItem, m_Weapon_flNextPrimaryAttack, WeaponRate[ WeaponOnMode( bitsWeaponState ) ] );
 	set_member( pItem, m_Weapon_flNextSecondaryAttack, WeaponRate[ WeaponOnMode( bitsWeaponState ) ] );
 	set_member( pItem, m_Weapon_flTimeWeaponIdle, WeaponAnim_Shoot_Time );
+
+	return true;
 }
 
 public CBasePlayerWeapon__CheckCharge( const pItem, const pPlayer, &bitsWeaponState )
@@ -1020,6 +1028,7 @@ public CBasePlayerWeapon__ClawsDamage( const pAttacker, pVictim )
 				if ( strlen( szSoundPath ) )
 				{
 					strtolower( szSoundPath );
+
 				#if AMXX_VERSION_NUM < 190
 					format( szSoundPath, charsmax( szSoundPath ), "sound/%s", szSoundPath );
 					engfunc( EngFunc_PrecacheGeneric, szSoundPath );
@@ -1064,7 +1073,12 @@ public CBasePlayerWeapon__ClawsDamage( const pAttacker, pVictim )
 			strtok( szBuffer, szSprName, charsmax( szSprName ), szBuffer, charsmax( szBuffer ), ' ', 1 );
 			trim( szSprName );
 
+		#if AMXX_VERSION_NUM < 190
+			format( szSprName, charsmax( szSprName ), "sprites/%s.spr", szSprName );
+			engfunc( EngFunc_PrecacheGeneric, szSprName );
+		#else
 			engfunc( EngFunc_PrecacheGeneric, fmt( "sprites/%s.spr", szSprName ) );
+		#endif
 		}
 
 		fclose( pFile );
