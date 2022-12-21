@@ -78,9 +78,6 @@ public client_disconnected( pPlayer ) CBasePlayer__RemovePlayerModel( pPlayer );
 /* ~ [ ReGameDLL / HamSandwich ] ~ */
 public CWeapon__Deploy_Pre( const pItem )
 {
-	if ( is_nullent( pItem ) )
-		return;
-
 	new pPlayer = get_member( pItem, m_pPlayer );
 	if ( !is_user_alive( pPlayer ) )
 		return;
@@ -95,43 +92,39 @@ public CWeapon__Deploy_Pre( const pItem )
 /* ~ [ Other ] ~ */
 public CBasePlayer__InitPlayerModel( const pPlayer )
 {
-	new pEntity = rg_create_entity( EntityReference );
-	if ( is_nullent( pEntity ) )
-		return NULLENT;
+	gl_pWeaponPlayerModel[ pPlayer ] = rg_create_entity( EntityReference );
 
-	set_entvar( pEntity, var_classname, EntityClassName );
-	set_entvar( pEntity, var_movetype, MOVETYPE_FOLLOW );
-	set_entvar( pEntity, var_owner, pPlayer );
-	set_entvar( pEntity, var_aiment, pPlayer );
-
-	gl_pWeaponPlayerModel[ pPlayer ] = pEntity;
-
-	return pEntity;
+	if ( !is_nullent( gl_pWeaponPlayerModel[ pPlayer ] ) )
+	{
+		set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_classname, EntityClassName );
+		set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_movetype, MOVETYPE_FOLLOW );
+		set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_owner, pPlayer );
+		set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_aiment, pPlayer );
+	}
 }
 
 bool: CBasePlayer__WeaponPlayerModel( const pPlayer, const szModel[ ] = "", const iBody = 0, const iSkin = 0, const iSequence = 0 )
 {
-	static pEntity;
-	if ( ( pEntity = CBasePlayer__GetPlayerModel( pPlayer ) ) && is_nullent( pEntity ) )
+	if ( is_nullent( gl_pWeaponPlayerModel[ pPlayer ] ) )
 	{
-		if ( ( pEntity = CBasePlayer__InitPlayerModel( pPlayer ) ) && is_nullent( pEntity ) )
+		if ( CBasePlayer__InitPlayerModel( pPlayer ) && is_nullent( gl_pWeaponPlayerModel[ pPlayer ] ) )
 			return false;
 	}
 
-	new bitsEffects = get_entvar( pEntity, var_effects );
+	new bitsEffects = get_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_effects );
 	if ( IsNullString( szModel ) )
 		bitsEffects |= EF_NODRAW;
 	else
 	{
 		bitsEffects &= ~EF_NODRAW;
-		engfunc( EngFunc_SetModel, pEntity, szModel );
+		engfunc( EngFunc_SetModel, gl_pWeaponPlayerModel[ pPlayer ], szModel );
 	}
 
-	set_entvar( pEntity, var_body, iBody );
-	set_entvar( pEntity, var_skin, iSkin );
-	set_entvar( pEntity, var_effects, bitsEffects );
+	set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_body, iBody );
+	set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_skin, iSkin );
+	set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_effects, bitsEffects );
 
-	UTIL_SetEntityAnim( pEntity, iSequence );
+	UTIL_SetEntityAnim( gl_pWeaponPlayerModel[ pPlayer ], iSequence );
 
 	return true;
 }
@@ -140,15 +133,13 @@ public CBasePlayer__GetPlayerModel( const pPlayer ) return gl_pWeaponPlayerModel
 
 public bool: CBasePlayer__RemovePlayerModel( const pPlayer )
 {
-	static pEntity;
-	if ( ( pEntity = CBasePlayer__GetPlayerModel( pPlayer ) ) && !is_nullent( pEntity ) )
+	if ( !is_nullent( gl_pWeaponPlayerModel[ pPlayer ] ) )
 	{
-		gl_pWeaponPlayerModel[ pPlayer ] = NULLENT;
-
-		UTIL_KillEntity( pEntity );
+		UTIL_KillEntity( gl_pWeaponPlayerModel[ pPlayer ] );
 		return true;
 	}
 
+	gl_pWeaponPlayerModel[ pPlayer ] = NULLENT;
 	return false;
 }
 
@@ -181,10 +172,10 @@ public bool: native_wpn_player_model_set( const iPlugin, const iParams )
 		return false;
 	}
 
-	new szWeaponModel[ MAX_RESOURCE_PATH_LENGTH ];
-	get_string( arg_model, szWeaponModel, charsmax( szWeaponModel ) );
+	new szModel[ MAX_RESOURCE_PATH_LENGTH ];
+	get_string( arg_model, szModel, charsmax( szModel ) );
 
-	return CBasePlayer__WeaponPlayerModel( pPlayer, szWeaponModel, get_param( arg_body ), get_param( arg_skin ), get_param( arg_sequence ) );
+	return CBasePlayer__WeaponPlayerModel( pPlayer, szModel, get_param( arg_body ), get_param( arg_skin ), get_param( arg_sequence ) );
 }
 
 public native_wpn_player_model_get( const iPlugin, const iParams )
@@ -198,7 +189,7 @@ public native_wpn_player_model_get( const iPlugin, const iParams )
 		return -1;
 	}
 
-	return CBasePlayer__GetPlayerModel( pPlayer );
+	return gl_pWeaponPlayerModel[ pPlayer ];
 }
 
 public bool: native_wpn_player_model_hide( const iPlugin, const iParams )
