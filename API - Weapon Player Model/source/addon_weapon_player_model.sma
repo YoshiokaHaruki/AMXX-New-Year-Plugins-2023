@@ -29,7 +29,7 @@ new const PluginAuthor[ ] =				"Yoshioka Haruki";
  */
 #define HidePlayerModelWhenDie
 
-new const PluginPrefix[ ] =				"[API:WPM]";
+new const PluginPrefix[ ] =				"API:WPM";
 new const EntityReference[ ] =			"info_target";
 new const EntityClassName[ ] =			"ent_weapon_pmodel";
 
@@ -59,11 +59,11 @@ public plugin_init( )
 #if defined _reapi_included
 	/* -> ReGameDLL <- */
 	#if defined HidePlayerModelEachDeploy
-		RegisterHookChain( RG_CBasePlayerWeapon_DefaultDeploy, "CWeapon__Deploy_Pre", false );
+		RegisterHookChain( RG_CBasePlayerWeapon_DefaultDeploy, "CBasePlayerWeapon_Deploy_Pre", false );
 	#endif
 
 	#if defined HidePlayerModelWhenDie
-		RegisterHookChain( RG_CBasePlayer_Killed, "CPlayer__Killed_Post", true );
+		RegisterHookChain( RG_CBasePlayer_Killed, "CBasePlayer_Killed_Post", true );
 	#endif
 #else
 	/* -> HamSandwich <- */
@@ -78,11 +78,11 @@ public plugin_init( )
 		};
 
 		for ( new i = 0, iIterations = sizeof WeaponReferences; i < iIterations; i++ )
-			RegisterHam( Ham_Item_Deploy, WeaponReferences[ i ], "CWeapon__Deploy_Pre", false );
+			RegisterHam( Ham_Item_Deploy, WeaponReferences[ i ], "CBasePlayerWeapon_Deploy_Pre", false );
 	#endif
 
 	#if defined HidePlayerModelWhenDie
-		RegisterHam( Ham_Killed, "player", "CPlayer__Killed_Post", true );
+		RegisterHam( Ham_Killed, "player", "CBasePlayer_Killed_Post", true );
 	#endif
 #endif
 }
@@ -92,7 +92,7 @@ public client_disconnected( pPlayer ) CBasePlayer__RemovePlayerModel( pPlayer );
 
 /* ~ [ ReGameDLL / HamSandwich ] ~ */
 #if defined HidePlayerModelEachDeploy
-	public CWeapon__Deploy_Pre( const pItem )
+	public CBasePlayerWeapon_Deploy_Pre( const pItem )
 	{
 		new pPlayer = get_member( pItem, m_pPlayer );
 		if ( !is_user_alive( pPlayer ) )
@@ -103,11 +103,11 @@ public client_disconnected( pPlayer ) CBasePlayer__RemovePlayerModel( pPlayer );
 #endif
 
 #if defined HidePlayerModelWhenDie
-	public CPlayer__Killed_Post( const pVictim ) CBasePlayer__WeaponPlayerModel( pVictim );
+	public CBasePlayer_Killed_Post( const pVictim ) CBasePlayer__WeaponPlayerModel( pVictim );
 #endif
 
 /* ~ [ Other ] ~ */
-public CBasePlayer__InitPlayerModel( const pPlayer )
+public bool: CBasePlayer__InitPlayerModel( const pPlayer )
 {
 	gl_pWeaponPlayerModel[ pPlayer ] = rg_create_entity( EntityReference );
 
@@ -117,14 +117,18 @@ public CBasePlayer__InitPlayerModel( const pPlayer )
 		set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_movetype, MOVETYPE_FOLLOW );
 		set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_owner, pPlayer );
 		set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_aiment, pPlayer );
+
+		return true;
 	}
+
+	return false;
 }
 
 bool: CBasePlayer__WeaponPlayerModel( const pPlayer, const szModel[ ] = "", const iBody = 0, const iSkin = 0, const iSequence = 0 )
 {
 	if ( is_nullent( gl_pWeaponPlayerModel[ pPlayer ] ) )
 	{
-		if ( CBasePlayer__InitPlayerModel( pPlayer ) && is_nullent( gl_pWeaponPlayerModel[ pPlayer ] ) )
+		if ( !CBasePlayer__InitPlayerModel( pPlayer ) )
 			return false;
 	}
 
@@ -135,46 +139,34 @@ bool: CBasePlayer__WeaponPlayerModel( const pPlayer, const szModel[ ] = "", cons
 	{
 		bitsEffects &= ~EF_NODRAW;
 		engfunc( EngFunc_SetModel, gl_pWeaponPlayerModel[ pPlayer ], szModel );
+
+		set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_body, iBody );
+		set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_skin, iSkin );
+		set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_sequence, iSequence );
+		set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_frame, 0.0 );
+		set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_framerate, 1.0 );
+		set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_animtime, get_gametime( ) );
 	}
 
-	set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_body, iBody );
-	set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_skin, iSkin );
 	set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_effects, bitsEffects );
-
-	UTIL_SetEntityAnim( gl_pWeaponPlayerModel[ pPlayer ], iSequence );
 
 	return true;
 }
 
 public bool: CBasePlayer__RemovePlayerModel( const pPlayer )
 {
-	new bool: bResult = false;
+	new pEntity = gl_pWeaponPlayerModel[ pPlayer ];
+	gl_pWeaponPlayerModel[ pPlayer ] = NULLENT;
 
-	if ( !is_nullent( gl_pWeaponPlayerModel[ pPlayer ] ) )
+	if ( !is_nullent( pEntity ) )
 	{
-		UTIL_KillEntity( gl_pWeaponPlayerModel[ pPlayer ] );
-		bResult = true;
+		set_entvar( pEntity, var_flags, FL_KILLME );
+		set_entvar( pEntity, var_nextthink, -1.0 );
+
+		return true;
 	}
 
-	gl_pWeaponPlayerModel[ pPlayer ] = NULLENT;
-	return bResult;
-}
-
-/* ~ [ Stocks ] ~ */
-/* -> Destroy Entity <- */
-stock UTIL_KillEntity( const pEntity )
-{
-	set_entvar( pEntity, var_flags, FL_KILLME );
-	set_entvar( pEntity, var_nextthink, get_gametime( ) );
-}
-
-/* -> Entity Animation <- */
-stock UTIL_SetEntityAnim( const pEntity, const iSequence = 0, const Float: flFrame = 0.0, const Float: flFrameRate = 1.0 )
-{
-	set_entvar( pEntity, var_frame, flFrame );
-	set_entvar( pEntity, var_framerate, flFrameRate );
-	set_entvar( pEntity, var_animtime, get_gametime( ) );
-	set_entvar( pEntity, var_sequence, iSequence );
+	return false;
 }
 
 /* ~ [ Natives ] ~ */
@@ -185,7 +177,7 @@ public bool: native_wpn_player_model_set( const iPlugin, const iParams )
 	new pPlayer = get_param( arg_player );
 	if ( !is_user_alive( pPlayer ) )
 	{
-		log_error( AMX_ERR_NATIVE, "%s Invalid Player (Id: %i)", PluginPrefix, pPlayer );
+		log_error( AMX_ERR_NATIVE, "[%s | SET] Invalid Player (Id: %i)", PluginPrefix, pPlayer );
 		return false;
 	}
 
@@ -202,7 +194,7 @@ public native_wpn_player_model_get( const iPlugin, const iParams )
 	new pPlayer = get_param( arg_player );
 	if ( !is_user_alive( pPlayer ) )
 	{
-		log_error( AMX_ERR_NATIVE, "%s Invalid Player (Id: %i)", PluginPrefix, pPlayer );
+		log_error( AMX_ERR_NATIVE, "[%s | GET] Invalid Player (Id: %i)", PluginPrefix, pPlayer );
 		return -1;
 	}
 
@@ -216,7 +208,7 @@ public bool: native_wpn_player_model_hide( const iPlugin, const iParams )
 	new pPlayer = get_param( arg_player );
 	if ( !is_user_alive( pPlayer ) )
 	{
-		log_error( AMX_ERR_NATIVE, "%s Invalid Player (Id: %i)", PluginPrefix, pPlayer );
+		log_error( AMX_ERR_NATIVE, "[%s | HIDE] Invalid Player (Id: %i)", PluginPrefix, pPlayer );
 		return false;
 	}
 
@@ -230,7 +222,7 @@ public bool: native_wpn_player_model_remove( const iPlugin, const iParams )
 	new pPlayer = get_param( arg_player );
 	if ( !is_user_alive( pPlayer ) )
 	{
-		log_error( AMX_ERR_NATIVE, "%s Invalid Player (Id: %i)", PluginPrefix, pPlayer );
+		log_error( AMX_ERR_NATIVE, "[%s | REMOVE] Invalid Player (Id: %i)", PluginPrefix, pPlayer );
 		return false;
 	}
 
