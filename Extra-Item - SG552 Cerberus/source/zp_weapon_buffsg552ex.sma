@@ -18,7 +18,7 @@
 #include <fakemeta>
 #include <hamsandwich>
 #include <xs>
-// #include <reapi>
+#include <reapi>
 #include <zombieplague>
 
 #tryinclude <api_muzzleflash>
@@ -208,17 +208,6 @@ enum ( <<= 1 ) {
 };
 
 /* ~ [ Macroses ] ~ */
-// idk how to use AMXX version 1.8.2 and below, this is an outdated bullshit
-#if AMXX_VERSION_NUM <= 183
-	#define OBS_IN_EYE							4
-#endif
-
-#if AMXX_VERSION_NUM <= 182
-	#define write_coord_f(%0)					engfunc( EngFunc_WriteCoord, %0 )
-	stock message_begin_f( const iDest, const iMsgType, const Float: vecOrigin[ 3 ] = { 0.0, 0.0, 0.0 }, const pReceiver = 0 )
-		engfunc( EngFunc_MessageBegin, iDest, iMsgType, vecOrigin, pReceiver );
-#endif
-
 #if !defined Vector3
 	#define Vector3(%0)					Float: %0[ 3 ]
 #endif
