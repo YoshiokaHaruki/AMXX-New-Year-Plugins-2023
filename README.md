@@ -12,3 +12,5 @@ The plugin allows you to create an additional entity for p_ weapon models, speci
 
 ### Extra-Item: SG552 Cerberus
 The SG552 Cerberus weapon from the Counter-Strike Online game is based on normal code, which is most similar to the original weapon from the game. After watching the video, plugins with these weapons from other authors, I saw terrible code, and also the wrong physics of weapons, so I decided to make my own version, which will be completely (or almost completely) similar to the original weapons from the game
+
+- ```_fx``` sprites will be loaded if you use the UseOptimizedSprites setting in the plugin (Other sprites will not be uploaded to the client)
