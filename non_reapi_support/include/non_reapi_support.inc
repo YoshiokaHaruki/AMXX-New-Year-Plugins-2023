@@ -9,7 +9,7 @@
  * This file created by Yoshioka Haruki (xUnicorn a.k.a t3rkecorejz)
  * It's not final version of this include, new features will be added over time
  * 
- * Latest update: 20.10.2022
+ * Latest update: 14.12.2022
  */
 
 #if !defined _fakemeta_util_included
@@ -31,33 +31,38 @@
 	#define MAX_NAME_LENGTH					32
 #endif
 
-#define DEFAULT_LARGE_AWP_ZOOM				10
-#define DEFAULT_LARGE_OTHER_SNIPERS_ZOOM	15
-#define DEFAULT_SMALL_SNIPERS_ZOOM			40
-#define DEFAULT_AUG_SG552_ZOOM				55
-#define DEFAULT_NO_ZOOM						90
+#if !defined _cssdk_const_included
+	#define DEFAULT_LARGE_AWP_ZOOM				10
+	#define DEFAULT_LARGE_OTHER_SNIPERS_ZOOM	15
+	#define DEFAULT_SMALL_SNIPERS_ZOOM			40
+	#define DEFAULT_AUG_SG552_ZOOM				55
+	#define DEFAULT_NO_ZOOM						90
 
-enum _Menu
-{
-	Menu_OFF,
-	Menu_ChooseTeam,
-	Menu_IGChooseTeam,
-	Menu_ChooseAppearance,
-	Menu_Buy,
-	Menu_BuyPistol,
-	Menu_BuyRifle,
-	Menu_BuyMachineGun,
-	Menu_BuyShotgun,
-	Menu_BuySubMachineGun,
-	Menu_BuyItem,
-	Menu_Radio1,
-	Menu_Radio2,
-	Menu_Radio3,
-	Menu_ClientBuy
-};
+	enum _Menu
+	{
+		Menu_OFF,
+		Menu_ChooseTeam,
+		Menu_IGChooseTeam,
+		Menu_ChooseAppearance,
+		Menu_Buy,
+		Menu_BuyPistol,
+		Menu_BuyRifle,
+		Menu_BuyMachineGun,
+		Menu_BuyShotgun,
+		Menu_BuySubMachineGun,
+		Menu_BuyItem,
+		Menu_Radio1,
+		Menu_Radio2,
+		Menu_Radio3,
+		Menu_ClientBuy
+	};
+#endif
 
 /* ~ [ Macroses ] ~ */
-#define BIT(%0)								( 1<<( %0 ) )
+#if !defined _cssdk_const_included
+	#define BIT(%0)								( 1<<( %0 ) )
+#endif
+
 #define is_nullent(%0)						( %0 == NULLENT || pev_valid( %0 ) != PDATA_SAFE )
 #define rg_create_entity(%0)				fm_create_entity( %0 )
 
@@ -209,6 +214,7 @@ enum _Menu
 #define m_Weapon_iPrimaryAmmoType			49
 #define m_Weapon_iClip						51
 #define m_Weapon_fInReload					54
+#define m_Weapon_fInSpecialReload			55
 #define m_Weapon_iShellId					57
 #define m_Weapon_iDirection					60
 #define m_Weapon_flAccuracy					62
@@ -266,7 +272,7 @@ stock set_member( const pEntity, const any: mOffset, const any: iValue, const an
 		switch ( mOffset )
 		{
 			// Int Weapon
-			case m_Weapon_iGlock18ShotsFired, m_Weapon_iPrimaryAmmoType, m_Weapon_iWeaponState, m_Weapon_iClip, m_Weapon_iShotsFired, m_Weapon_fInReload, m_Weapon_iShellId, m_Weapon_iDirection: {
+			case m_Weapon_iGlock18ShotsFired, m_Weapon_iPrimaryAmmoType, m_Weapon_iWeaponState, m_Weapon_iClip, m_Weapon_iShotsFired, m_Weapon_fInReload, m_Weapon_fInSpecialReload, m_Weapon_iShellId, m_Weapon_iDirection: {
 				set_pdata_int( pEntity, mOffset + iExtraValue, iValue, linux_diff_weapon );
 			}
 			// Float Weapon
@@ -305,7 +311,7 @@ stock any: get_member( const pEntity, const any: mOffset, const any: iExtraValue
 		switch ( mOffset )
 		{
 			// Int Weapon
-			case m_iId, m_Weapon_iGlock18ShotsFired, m_Weapon_iWeaponState, m_Weapon_iPrimaryAmmoType, m_Weapon_iClip, m_Weapon_iShotsFired, m_Weapon_fInReload, m_Weapon_iShellId, m_Weapon_iDirection: {
+			case m_iId, m_Weapon_iGlock18ShotsFired, m_Weapon_iWeaponState, m_Weapon_iPrimaryAmmoType, m_Weapon_iClip, m_Weapon_iShotsFired, m_Weapon_fInReload, m_Weapon_fInSpecialReload, m_Weapon_iShellId, m_Weapon_iDirection: {
 				return get_pdata_int( pEntity, mOffset + iExtraValue, linux_diff_weapon );
 			}
 			// Float Weapon
