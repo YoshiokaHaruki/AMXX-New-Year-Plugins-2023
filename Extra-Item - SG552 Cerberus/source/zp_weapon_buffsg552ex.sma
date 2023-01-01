@@ -608,6 +608,7 @@ public Ham_CWeapon_PostFrame_Pre( const pItem )
 	if ( BIT_VALID( GetWeaponState( pItem ), WeaponState_HasMode ) )
 		UTIL_PlayTimingSound( pPlayer, pItem, CHAN_STATIC, WeaponSounds[ Sound_Mode_Idle ], 9.0 );
 
+#if !defined _reapi_included
 	if ( get_member( pItem, m_Weapon_fInReload ) )
 	{
 		new iClip = GetWeaponClip( pItem );
@@ -619,6 +620,7 @@ public Ham_CWeapon_PostFrame_Pre( const pItem )
 		SetWeaponAmmo( pPlayer, iAmmo - iReloadClip, iAmmoType );
 		set_member( pItem, m_Weapon_fInReload, false );
 	}
+#endif
 
 	return HAM_IGNORED;
 }
