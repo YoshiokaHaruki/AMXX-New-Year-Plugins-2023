@@ -909,6 +909,13 @@ public CBasePlayerWeapon__ResetChargeMode( const pItem, const pPlayer )
 
 public CBasePlayerWeapon__ClawsDamage( const pAttacker, pVictim )
 {
+	static pActiveItem; pActiveItem = get_member( pAttacker, m_pActiveItem );
+	if ( is_nullent( pActiveItem ) || !IsCustomWeapon( pActiveItem, WeaponUnicalIndex ) )
+		return;
+
+	if ( !WeaponOnMode( GetWeaponState( pActiveItem ) ) )
+		return;
+
 	if ( !is_user_alive( pVictim ) )
 		return;
 
@@ -917,13 +924,6 @@ public CBasePlayerWeapon__ClawsDamage( const pAttacker, pVictim )
 #else
 	if ( IsSimilarPlayersTeam( pVictim, pAttacker ) )
 #endif
-		return;
-
-	static pActiveItem; pActiveItem = get_member( pAttacker, m_pActiveItem );
-	if ( is_nullent( pActiveItem ) || !IsCustomWeapon( pActiveItem, WeaponUnicalIndex ) )
-		return;
-
-	if ( !WeaponOnMode( GetWeaponState( pActiveItem ) ) )
 		return;
 
 	static Vector3( vecOrigin ); get_entvar( pVictim, var_origin, vecOrigin );
@@ -971,10 +971,7 @@ public CBasePlayerWeapon__ClawsDamage( const pAttacker, pVictim )
 #if !defined _zombieplague_included
 	stock bool: IsSimilarPlayersTeam( const pPlayer, const pTarget )
 	{
-		if ( get_member( pPlayer, m_iTeam ) == get_member( pTarget, m_iTeam ) )
-			return true;
-
-		return false;
+		return bool: ( get_member( pPlayer, m_iTeam ) == get_member( pTarget, m_iTeam ) );
 	}
 #endif
 
