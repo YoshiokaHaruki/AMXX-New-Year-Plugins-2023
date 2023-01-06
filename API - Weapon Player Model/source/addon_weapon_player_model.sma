@@ -1,5 +1,5 @@
 new const PluginName[ ] =				"[API] Addon: Weapon Player Model";
-new const PluginVersion[ ] =			"1.0";
+new const PluginVersion[ ] =			"1.0.1";
 new const PluginAuthor[ ] =				"Yoshioka Haruki";
 
 /* ~ [ Includes ] ~ */
@@ -49,6 +49,7 @@ public plugin_natives( )
 	register_native( "api_wpn_player_model_set",	"native_wpn_player_model_set" );
 	register_native( "api_wpn_player_model_get",	"native_wpn_player_model_get" );
 	register_native( "api_wpn_player_model_hide",	"native_wpn_player_model_hide" );
+	register_native( "api_wpn_player_model_show",	"native_wpn_player_model_show" );
 	register_native( "api_wpn_player_model_remove",	"native_wpn_player_model_remove" );
 }
 
@@ -213,6 +214,24 @@ public bool: native_wpn_player_model_hide( const iPlugin, const iParams )
 	}
 
 	return CBasePlayer__WeaponPlayerModel( pPlayer );
+}
+
+public bool: native_wpn_player_model_show( const iPlugin, const iParams )
+{
+	enum { arg_player = 1 };
+
+	new pPlayer = get_param( arg_player );
+	if ( !is_user_alive( pPlayer ) )
+	{
+		log_error( AMX_ERR_NATIVE, "[%s | SHOW] Invalid Player (Id: %i)", PluginPrefix, pPlayer );
+		return false;
+	}
+
+	if ( is_nullent( gl_pWeaponPlayerModel[ pPlayer ] ) )
+		return false;
+
+	set_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_effects, get_entvar( gl_pWeaponPlayerModel[ pPlayer ], var_effects ) & ~EF_NODRAW );
+	return true;
 }
 
 public bool: native_wpn_player_model_remove( const iPlugin, const iParams )

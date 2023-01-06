@@ -33,6 +33,15 @@ native api_wpn_player_model_get( const pPlayer );
 native bool: api_wpn_player_model_hide( const pPlayer );
 
 /**
+ * Show the Weapon Player Model
+ * 
+ * @param pPlayer           Player Index
+ * 
+ * @return                  Returns 'true' if the model has been showed
+ */
+native bool: api_wpn_player_model_show( const pPlayer );
+
+/**
  * Remove the Weapon Player Model
  * 
  * @param pPlayer			Player Index
