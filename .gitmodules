@@ -4,3 +4,6 @@
 [submodule "non_reapi_support.inc"]
 	path = non_reapi_support.inc
 	url = https://gist.github.com/YoshiokaHaruki/bcc9c6dbc6e23c69ea53d04c72a03cbd
+[submodule "non_reapi_support"]
+	path = non_reapi_support
+	url = https://gist.github.com/YoshiokaHaruki/bcc9c6dbc6e23c69ea53d04c72a03cbd
